@@ -5,10 +5,9 @@ public class AuthRequest {
     private String email;
     private String password;
     private String role;
-    // ✅ NOUVEAU CHAMP : Niveau scolaire
     private String niveau;
 
-    // ✅ Constructeurs
+   
     public AuthRequest() {
     }
 
@@ -20,7 +19,6 @@ public class AuthRequest {
         this.niveau = niveau;
     }
 
-    // ✅ Getters et Setters
     public String getName() {
         return name;
     }
@@ -53,7 +51,6 @@ public class AuthRequest {
         this.role = role;
     }
 
-    // ✅ NOUVEAU : Getter et Setter pour le niveau
     public String getNiveau() {
         return niveau;
     }

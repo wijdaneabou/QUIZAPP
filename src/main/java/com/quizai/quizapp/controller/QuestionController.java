@@ -30,14 +30,14 @@ public class QuestionController {
         List<QuestionDto> savedQuestions = questionService.createQuestionsBatch(questionDtos, quizId);
         return ResponseEntity.ok(savedQuestions);
     }
-    // Récupérer une question par ID
+  
     @GetMapping("/{questionId}")
     public ResponseEntity<QuestionDto> getQuestionById(@PathVariable Long questionId) {
         QuestionDto question = questionService.getQuestionById(questionId);
         return ResponseEntity.ok(question);
     }
 
-    // Mettre à jour une question (ENDPOINT PRINCIPAL pour votre fonctionnalité)
+ 
     @PutMapping("/{questionId}")
     public ResponseEntity<QuestionDto> updateQuestion(
             @PathVariable Long questionId,
@@ -46,14 +46,12 @@ public class QuestionController {
         return ResponseEntity.ok(updatedQuestion);
     }
 
-    // Supprimer une question
     @DeleteMapping("/{questionId}")
     public ResponseEntity<Void> deleteQuestion(@PathVariable Long questionId) {
         questionService.deleteQuestion(questionId);
         return ResponseEntity.noContent().build();
     }
 
-    // Créer une nouvelle question pour un quiz
     @PostMapping("/quiz/{quizId}")
     public ResponseEntity<QuestionDto> createQuestion(
             @RequestBody QuestionDto questionDto,

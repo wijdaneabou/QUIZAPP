@@ -8,6 +8,6 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "Bienvenue dans QuizAI 🚀";
+        return "Bienvenue dans QuizAI ";
     }
 }

@@ -570,23 +570,16 @@ const TakeQuizPage = ({ onNavigateBack }) => {
 
   const progressPercentage = ((currentQuestion + 1) / questions.length) * 100;
   
-  // Calculer le nombre de questions répondues
+  //  le nombre de questions répondues
   const answeredCount = questions.filter(question => {
     const questionType = getQuestionType(question);
     const isMultiple = questionType === 'multiple';
     return hasAnswer(question.id, isMultiple);
   }).length;
 
-  // ============== DÉTECTION AMÉLIORÉE DU TYPE DE QUESTION ==============
-  
-  // Déterminer si la question actuelle est à choix multiples
+
   const isCurrentQuestionMultiple = getQuestionType(currentQ) === 'multiple';
   
-  // Debug: afficher le type de question détecté (optionnel)
-  // console.log('Question actuelle:', currentQ.questionText);
-  // console.log('Type détecté:', isCurrentQuestionMultiple ? 'Multiple' : 'Simple');
-  // debugQuestionType(currentQ);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">

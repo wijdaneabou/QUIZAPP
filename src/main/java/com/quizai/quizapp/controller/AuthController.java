@@ -44,7 +44,6 @@ public class AuthController {
     @Value("${GOOGLE_CLIENT_ID}")
     private String googleClientId;
 
-    // ✅ NOUVEAU : Liste des niveaux scolaires valides
     private static final Set<String> VALID_LEVELS = Set.of(
         "1ère année collège",
         "2ème année collège", 
@@ -74,7 +73,6 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Le rôle est requis");
             }
 
-            // ✅ NOUVEAU : Validation du niveau pour les étudiants (USER)
             if ("USER".equals(request.getRole().toUpperCase())) {
                 if (request.getNiveau() == null || request.getNiveau().isEmpty()) {
                     return ResponseEntity.badRequest().body("Le niveau scolaire est requis pour les étudiants");
@@ -101,7 +99,6 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Rôle invalide. Rôles acceptés: USER, ADMIN");
             }
 
-            // ✅ NOUVEAU : Définir le niveau pour les étudiants
             if (User.Role.USER.equals(user.getRole())) {
                 user.setNiveau(request.getNiveau());
             }
@@ -117,7 +114,7 @@ public class AuthController {
                     "email", savedUser.getEmail(),
                     "name", savedUser.getName(),
                     "role", savedUser.getRole().name(),
-                    "niveau", savedUser.getNiveau() != null ? savedUser.getNiveau() : "" // ✅ Inclure le niveau
+                    "niveau", savedUser.getNiveau() != null ? savedUser.getNiveau() : "" 
                 )
             ));
         } catch (Exception e) {
@@ -141,7 +138,6 @@ public class AuthController {
 
         User dbUser = existingUser.get();
         
-        // Test password matching
         boolean passwordMatches = passwordEncoder.matches(request.getPassword(), dbUser.getPassword());
         LOGGER.info("Password matches: " + passwordMatches);
         
@@ -165,7 +161,7 @@ public class AuthController {
                 "email", dbUser.getEmail(),
                 "name", dbUser.getName(),
                 "role", dbUser.getRole().name(),
-                "niveau", dbUser.getNiveau() != null ? dbUser.getNiveau() : "" // ✅ Inclure le niveau
+                "niveau", dbUser.getNiveau() != null ? dbUser.getNiveau() : "" 
             )
         ));
     }
@@ -198,15 +194,12 @@ public class AuthController {
                 newUser.setPassword(passwordEncoder.encode(email)); 
                 newUser.setIsActive(true);
                 newUser.setRole(User.Role.USER);
-                // ✅ NOUVEAU : Pour Google Login, on peut laisser le niveau null 
-                // et l'utilisateur pourra le définir plus tard
                 newUser.setNiveau(null);
                 return userRepository.save(newUser);
             });
 
             String jwt = jwtUtil.generateToken(user.getEmail());
-            
-            // ✅ MODIFICATION : Retourner les informations complètes de l'utilisateur
+        
             return ResponseEntity.ok(Map.of(
                 "token", jwt,
                 "user", Map.of(
@@ -224,7 +217,6 @@ public class AuthController {
         }
     }
 
-    // ✅ NOUVEAU : Endpoint pour mettre à jour le niveau de l'utilisateur
     @PutMapping("/update-niveau")
     public ResponseEntity<?> updateNiveau(@RequestBody Map<String, String> request) {
         try {
@@ -249,8 +241,7 @@ public class AuthController {
             }
 
             User user = userOptional.get();
-            
-            // ✅ Vérifier que c'est un étudiant
+        
             if (!User.Role.USER.equals(user.getRole())) {
                 return ResponseEntity.badRequest().body("Seuls les étudiants peuvent avoir un niveau scolaire");
             }
@@ -276,7 +267,6 @@ public class AuthController {
         }
     }
 
-    // ✅ NOUVEAU : Endpoint pour récupérer les niveaux valides
     @GetMapping("/niveaux")
     public ResponseEntity<?> getValidLevels() {
         return ResponseEntity.ok(Map.of(

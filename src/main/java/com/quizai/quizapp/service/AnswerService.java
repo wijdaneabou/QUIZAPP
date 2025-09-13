@@ -55,12 +55,12 @@ public class AnswerService {
     public void deleteAnswer(Long id) {
         answerRepository.deleteById(id);
     }
+    
    public List<AnswerDto> updateAnswersForQuestion(Long questionId, List<AnswerDto> newAnswers) {
-    // Supprimer les anciennes réponses - UTILISEZ LA BONNE MÉTHODE
+   
     List<Answer> existingAnswers = answerRepository.findByQuestionIdOrderByChoiceOrderAsc(questionId);
     answerRepository.deleteAll(existingAnswers);
-    
-    // Créer les nouvelles réponses
+
     List<Answer> answersToSave = new ArrayList<>();
     for (int i = 0; i < newAnswers.size(); i++) {
         AnswerDto dto = newAnswers.get(i);
@@ -68,8 +68,7 @@ public class AnswerService {
         answer.setAnswerText(dto.getAnswerText());
         answer.setIsCorrect(dto.getIsCorrect());
         answer.setChoiceOrder(i + 1);
-        
-        // Récupérer la question
+    
         Question question = questionRepository.findById(questionId)
             .orElseThrow(() -> new RuntimeException("Question not found"));
         answer.setQuestion(question);
@@ -79,7 +78,6 @@ public class AnswerService {
     
     List<Answer> savedAnswers = answerRepository.saveAll(answersToSave);
     
-    // CORRIGÉ - utilisez AnswerDto::new au lieu de convertToDto
     return savedAnswers.stream()
             .map(AnswerDto::new)
             .collect(Collectors.toList());

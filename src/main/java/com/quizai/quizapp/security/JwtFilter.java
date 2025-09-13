@@ -42,7 +42,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 User user = userRepository.findByEmail(email).orElse(null);
 
                 if (user != null && jwtUtil.validateToken(token)) {
-                    // Ajout du rôle avec préfixe "ROLE_"
+
                     List<SimpleGrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + user.getRole())
                     );

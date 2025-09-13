@@ -21,7 +21,7 @@ const ResetPasswordPage = () => {
   const email = searchParams.get('email');
 
   useEffect(() => {
-    // Vérifier la validité du token au chargement
+   
     const validateToken = async () => {
       if (!token || !email) {
         setTokenValid(false);
@@ -29,8 +29,6 @@ const ResetPasswordPage = () => {
       }
 
       try {
-        // Simulation de validation du token
-        // await validateResetToken(token, email);
         console.log('Token validation for:', { token, email });
       } catch (error) {
         setTokenValid(false);
@@ -46,7 +44,6 @@ const ResetPasswordPage = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Effacer l'erreur quand l'utilisateur tape
     if (error) setError('');
   };
 
@@ -71,7 +68,7 @@ const ResetPasswordPage = () => {
     setLoading(true);
     setError('');
 
-    // Validation des mots de passe
+
     const passwordError = validatePassword(formData.password);
     if (passwordError) {
       setError(passwordError);
@@ -86,12 +83,9 @@ const ResetPasswordPage = () => {
     }
 
     try {
-      // 🔥 APPEL RÉEL À L'API au lieu de la simulation
       await resetPassword(token, email, formData.password);
       
       setSuccess(true);
-      
-      // Rediriger vers la page de connexion après 3 secondes
       setTimeout(() => {
         navigate('/login');
       }, 3000);
@@ -104,7 +98,6 @@ const ResetPasswordPage = () => {
     }
   };
 
-  // Page d'erreur pour token invalide
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -139,7 +132,6 @@ const ResetPasswordPage = () => {
     );
   }
 
-  // Page de succès
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -180,7 +172,6 @@ const ResetPasswordPage = () => {
     );
   }
 
-  // Formulaire de réinitialisation
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">

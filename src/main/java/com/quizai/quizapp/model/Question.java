@@ -36,10 +36,10 @@ public class Question {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
-    @JsonBackReference // Empêche les boucles lors de la remontée vers le Quiz
+    @JsonBackReference 
     private Quiz quiz;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference // Sérialise la liste des réponses
+    @JsonManagedReference 
     private List<Answer> answers;
 }

@@ -25,7 +25,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
     
-    // ✅ NOUVEAU CHAMP : Niveau scolaire pour les étudiants
+  
     @Column(name = "niveau")
     private String niveau;
     
@@ -81,14 +81,13 @@ public class User {
         this.role = role;
     }
     
-    // Méthode helper pour accepter les strings
     public void setRole(String roleString) {
         if (roleString != null) {
             this.role = Role.valueOf(roleString.toUpperCase());
         }
     }
     
-    // ✅ NOUVEAU : Getter et Setter pour le niveau
+   
     public String getNiveau() {
         return niveau;
     }

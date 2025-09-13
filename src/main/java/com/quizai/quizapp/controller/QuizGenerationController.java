@@ -120,8 +120,7 @@ public class QuizGenerationController {
         if (request.getDifficulty() == null || !List.of("easy", "medium", "hard").contains(request.getDifficulty().toLowerCase())) {
             return "La difficulté spécifiée n'est pas valide (doit être 'easy', 'medium' ou 'hard').";
         }
-        
-        // Validation des types de questions (mis à jour)
+    
         if (request.getQuestionTypes() != null && !request.getQuestionTypes().isEmpty()) {
             List<String> validTypes = List.of("single_choice", "multiple_choice", "true_false");
             for (String type : request.getQuestionTypes()) {
@@ -147,7 +146,6 @@ public class QuizGenerationController {
                 "1ère année baccalauréat", "2ème année baccalauréat"
         );
         
-        // Types de questions mis à jour
         List<Map<String, String>> questionTypes = List.of(
             Map.of(
                 "value", "single_choice", 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {  Trash2, Eye, ArrowLeft, ArrowRight, Clock, BookOpen, Settings, Bot, CheckCircle, Edit3, Sparkles, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import quizService from '../../services/quizService';

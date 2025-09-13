@@ -39,16 +39,15 @@ const QuizListPage = () => {
       );
     }
     
-    // Filtrer les quiz par niveau scolaire exact
+  
     const filtered = quizzes.filter(quiz => {
       const quizLevel = quiz.niveau;
       
-      // Cas où le quiz n'a pas de niveau spécifique (accessible à tous)
+    
       if (!quizLevel || quizLevel === 'Tous niveaux' || quizLevel === 'All' || quizLevel === '') {
         return true;
       }
-      
-      // Correspondance exacte du niveau
+   
       return quizLevel === userLevel;
     });
     
@@ -56,18 +55,15 @@ const QuizListPage = () => {
     return filtered;
   };
 
-  // Chargement initial des quiz depuis l'API
+
   useEffect(() => {
     const loadQuizzes = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Utilisez le service du premier fichier qui récupère maintenant les questions
+       
         const data = await quizService.getAllQuizzes();
-        console.log('Quiz récupérés avec questions:', data);
         
-        // Transformation des données pour correspondre au format attendu
         const transformedQuizzes = data.map(quiz => ({
           id: quiz.id,
           title: quiz.title,
@@ -82,7 +78,6 @@ const QuizListPage = () => {
           questionsData: quiz.questions || []
         }));
 
-        // ✅ CORRECTION : Appliquer le filtrage par niveau AVANT de définir les états
         const levelFilteredQuizzes = filterQuizzesByLevel(transformedQuizzes);
         
         console.log('Quiz après filtrage par niveau:', levelFilteredQuizzes);
@@ -100,24 +95,19 @@ const QuizListPage = () => {
     loadQuizzes();
   }, [userLevel, isStudent]);
 
-  // Filtrage des quiz par recherche et critères
+  // Filtrage 
   useEffect(() => {
     let filtered = quizzes;
-
-    // Recherche par titre ou matière
     if (searchTerm) {
       filtered = filtered.filter(quiz => 
         quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quiz.subject.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    // Filtre par matière
     if (selectedSubject !== 'all') {
       filtered = filtered.filter(quiz => quiz.subject === selectedSubject);
     }
 
-    // Filtre par difficulté
     if (selectedDifficulty !== 'all') {
       filtered = filtered.filter(quiz => 
         quiz.difficulty.toLowerCase() === selectedDifficulty.toLowerCase()
@@ -126,8 +116,6 @@ const QuizListPage = () => {
 
     setFilteredQuizzes(filtered);
   }, [searchTerm, selectedSubject, selectedDifficulty, quizzes]);
-
-  // Gestion de la suppression d'un quiz
   const handleDeleteQuiz = async (quizId) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce quiz ?')) {
       return;
@@ -135,12 +123,9 @@ const QuizListPage = () => {
 
     try {
       await quizService.deleteQuiz(quizId);
-      
-      // Mise à jour de l'état local
       const updatedQuizzes = quizzes.filter(quiz => quiz.id !== quizId);
       setQuizzes(updatedQuizzes);
       setFilteredQuizzes(updatedQuizzes.filter(quiz => {
-        // Réappliquer les filtres
         let matches = true;
         
         if (searchTerm) {
@@ -167,17 +152,14 @@ const QuizListPage = () => {
       alert('Erreur lors de la suppression du quiz.');
     }
   };
-
-  // Gestion de l'édition d'un quiz
   const handleEditQuiz = (quiz) => {
     navigate(`/admin/quiz/edit/${quiz.id}`);
   };
 
-  // Extraction des matières et difficultés uniques
   const subjects = [...new Set(quizzes.map(quiz => quiz.subject))];
   const difficulties = ['EASY', 'MEDIUM', 'HARD'];
 
-  // Fonction pour formater la difficulté en français
+ 
   const formatDifficulty = (difficulty) => {
     const difficultyMap = {
       'EASY': 'Facile',
@@ -279,7 +261,7 @@ const QuizListPage = () => {
             </div>
           </div>
           
-          {/* ✅ AJOUT : Affichage d'informations de débogage pour l'admin */}
+    
           {user?.role === 'admin' && (
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
@@ -290,7 +272,7 @@ const QuizListPage = () => {
           )}
         </div>
 
-        {/* Grille des Quiz */}
+    
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuizzes.map(quiz => (
             <QuizCard 
@@ -307,7 +289,6 @@ const QuizListPage = () => {
           ))}
         </div>
 
-        {/* Message si aucun quiz trouvé */}
         {filteredQuizzes.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="mb-4">
@@ -327,11 +308,10 @@ const QuizListPage = () => {
           </div>
         )}
 
-        {/* Bouton pour créer un nouveau quiz (admin seulement) */}
         {user?.role === 'admin' && (
           <div className="fixed bottom-8 right-8">
             <button
-              onClick={() => navigate('/admin/quiz/create')}
+              onClick={() => navigate('/admin/quiz/add')}
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-colors"
               title="Créer un nouveau quiz"
             >

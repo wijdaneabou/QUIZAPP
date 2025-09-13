@@ -96,7 +96,7 @@ const AIGeneratorPage = ({
       });
 
       const data = response.data;
-      console.log('🔍 Debug - Raw response from AI generation:', data);
+     
       
       if (!data || data.success === false) {
         const errorMessage = data?.error || 'Une erreur inattendue est survenue.';
@@ -106,7 +106,6 @@ const AIGeneratorPage = ({
 
       // Check if we have a valid ID in the response
       const quizId = data.id || data.quizId || data.quiz?.id;
-      console.log('🔍 Debug - Extracted quiz ID:', quizId);
       
       if (!quizId) {
         console.error('Aucun ID trouvé dans la réponse:', data);
@@ -131,12 +130,10 @@ const AIGeneratorPage = ({
 
       setQuiz(formattedQuiz);
       setQuestions(formattedQuiz.questions);
-
-      console.log('🔍 Debug - Final formatted quiz:', formattedQuiz);
-      
+    
       if (formattedQuiz.id) {
         const finalQuizId = parseInt(formattedQuiz.id);
-        console.log('🔍 Debug - Final parsed quiz ID:', finalQuizId);
+      
         
         if (isNaN(finalQuizId) || finalQuizId <= 0) {
           console.error('ID du quiz invalide après parsing:', formattedQuiz.id);
@@ -198,8 +195,7 @@ const AIGeneratorPage = ({
           ]
         });
       } else if (randomType === 'multiple_choice') {
-        // Multiple choice with multiple correct answers
-        const correctIndices = [0, 2]; // Example: A and C are correct
+        const correctIndices = [0, 2]; 
         questions.push({
           id: i + 1,
           questionText: `Question ${i + 1} - Choix multiples sur ${aiPrompt.topic}`,

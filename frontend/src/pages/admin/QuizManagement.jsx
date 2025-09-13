@@ -7,7 +7,6 @@ import {
   Trash2, 
   Eye,
   Copy,
-  MoreVertical,
   BookOpen,
   Users,
   Clock,
@@ -52,8 +51,7 @@ const QuizManagementPage = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Chargement des quiz...');
-      
+    
       // Récupérer tous les quiz
       const quizzesData = await quizService.getAllQuizzes();
       

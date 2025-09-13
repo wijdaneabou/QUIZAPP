@@ -1,20 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Save,
-  ArrowLeft,
-  Plus,
-  Trash2,
-  Eye,
-  Settings,
-  Edit3,
-  CheckCircle,
-  AlertCircle,
-  Loader,
-  BookOpen,
-  Clock,
-  Bot,
-  Sparkles
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {Save,ArrowLeft,Plus,Trash2,Eye,Settings,Edit3,CheckCircle,AlertCircle,Loader,BookOpen,Clock,Bot} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import quizService from '../../services/quizService';
 
@@ -296,7 +281,7 @@ const QuestionEditor = ({ question, index, updateQuestion, deleteQuestion, isEdi
       {isEditing && (
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Explication (optionnel)
+            Explication 
           </label>
           <textarea
             value={question.explanation || ''}
@@ -414,7 +399,7 @@ const EditQuizPage = () => {
         
         // Fallback : utiliser l'ancienne méthode
         else if (q.options && q.options.length > 2) {
-          console.warn('⚠️ Question sans answers, utilisation fallback avec correctAnswer unique');
+          console.warn(' Question sans answers, utilisation fallback avec correctAnswer unique');
           return {
             ...baseQuestion,
             type: 'MULTIPLE_CHOICE',
@@ -442,7 +427,7 @@ const EditQuizPage = () => {
       
       console.log('Questions formatées:', formattedQuestions);
       
-      // Debug : afficher les questions avec choix multiples
+      //  afficher les questions avec choix multiples
       formattedQuestions.forEach((q, index) => {
         if (q.type === 'MULTIPLE_CHOICE') {
           const correctCount = q.options.filter(opt => opt.isCorrect).length;
@@ -577,12 +562,9 @@ const EditQuizPage = () => {
     setError(null);
 
     try {
-      // 1. Mettre à jour les informations de base du quiz
-      console.log('📝 Mise à jour des informations du quiz...');
       await quizService.updateQuiz(id, quiz);
       
       // 2. Traiter chaque question
-      console.log('📝 Mise à jour des questions...');
       for (const question of questions) {
         try {
           // Préparer les données de la question selon son type
@@ -592,10 +574,8 @@ const EditQuizPage = () => {
             explanation: question.explanation || ''
           };
 
-          // Si c'est une nouvelle question (ID temporaire avec Date.now())
-          if (question.id > 1000000000000) { // IDs temporaires sont des timestamps
-            console.log(`➕ Création de nouvelle question: ${question.questionText.substring(0, 50)}...`);
-            
+          // Si c'est une nouvelle question 
+          if (question.id > 1000000000000) { 
             // Créer la question
             const createdQuestion = await quizService.createQuestions(id, [questionUpdateData]);
             const newQuestionId = createdQuestion[0]?.id || createdQuestion.id;
@@ -620,14 +600,10 @@ const EditQuizPage = () => {
               await quizService.updateAnswers(newQuestionId, answers);
             }
             
-          } else {
-            // Mettre à jour question existante
-            console.log(`🔄 Mise à jour question existante ID ${question.id}...`);
-            
-            // Mettre à jour la question
+          } else {  
             await quizService.updateQuestion(question.id, questionUpdateData);
             
-            // Mettre à jour les réponses selon le type
+      
             if (question.type === 'MULTIPLE_CHOICE') {
               const answers = question.options.map(option => ({
                 answerText: option.optionText,
@@ -651,7 +627,7 @@ const EditQuizPage = () => {
           }
           
         } catch (questionError) {
-          console.error(`❌ Erreur pour la question ${question.id}:`, questionError);
+          console.error(` Erreur pour la question ${question.id}:`, questionError);
           throw new Error(`Erreur pour la question "${question.questionText}": ${questionError.message}`);
         }
       }
@@ -884,7 +860,7 @@ const EditQuizPage = () => {
             <div className="flex items-center">
               <Edit3 className="w-5 h-5 text-blue-600 mr-2" />
               <h2 className="text-xl font-bold text-gray-900">Questions</h2>
-              
+    
             </div>
 
             <div className="flex space-x-2">

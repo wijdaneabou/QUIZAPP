@@ -53,7 +53,6 @@ public class QuizController {
             List<QuizDto> quizzes = quizService.getAllQuizzes();
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
-            System.err.println("Erreur dans getAllQuizzes: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -65,7 +64,6 @@ public class QuizController {
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
-            System.err.println("Erreur dans getQuizById: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -110,9 +108,7 @@ public class QuizController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            System.out.println("🔄 Début création quiz pour créateur: " + creatorId);
-            System.out.println("📤 Données reçues: " + request.getTitle());
-   
+        
             if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
                 response.put("success", false);
                 response.put("message", "Le titre est requis");
@@ -136,7 +132,6 @@ public class QuizController {
             quiz.setSubject(request.getSubject().trim());
             quiz.setNiveau(request.getNiveau());
             
-            // Gestion sécurisée de la difficulté
             if (request.getDifficulty() != null && !request.getDifficulty().trim().isEmpty()) {
                 try {
                     quiz.setDifficulty(Quiz.Difficulty.valueOf(request.getDifficulty().toUpperCase()));
@@ -152,14 +147,10 @@ public class QuizController {
             quiz.setTimeLimit(request.getTimeLimit() != null && request.getTimeLimit() > 0 
                 ? request.getTimeLimit() : 30);
             
-            // Gestion de l'IA
+            
             quiz.setIsAIGenerated(request.getIsAIGenerated() != null ? request.getIsAIGenerated() : false);
-
-            // Appel du service
             QuizDto createdQuiz = quizService.createQuiz(quiz, creatorId);
-            
-            System.out.println(" Quiz créé avec ID: " + createdQuiz.getId());
-            
+                 
     
             response.put("success", true);
             response.put("message", "Quiz créé avec succès");
@@ -191,13 +182,8 @@ public class QuizController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            System.out.println("🔄 Début mise à jour quiz ID: " + id);
-            System.out.println("📤 Données reçues: " + updateData);
-            
-            // Create Quiz object with only the fields that exist in your model
             Quiz quizDetails = new Quiz();
-            
-            // Map only existing fields safely
+
             if (updateData.containsKey("title") && updateData.get("title") != null) {
                 String title = updateData.get("title").toString().trim();
                 if (!title.isEmpty()) {
@@ -230,7 +216,6 @@ public class QuizController {
                         quizDetails.setDifficulty(difficulty);
                         System.out.println("✓ Difficulty set: " + difficulty);
                     } catch (IllegalArgumentException e) {
-                        System.err.println("❌ Invalid difficulty: " + difficultyStr);
                         response.put("success", false);
                         response.put("message", "Difficulté invalide: " + difficultyStr + ". Valeurs acceptées: EASY, MEDIUM, HARD");
                         return ResponseEntity.badRequest().body(response);
@@ -256,7 +241,6 @@ public class QuizController {
                         System.out.println("✓ TimeLimit set: " + timeLimit);
                     }
                 } catch (NumberFormatException e) {
-                    System.err.println("❌ Invalid timeLimit: " + updateData.get("timeLimit"));
                     response.put("success", false);
                     response.put("message", "Durée invalide: " + updateData.get("timeLimit"));
                     return ResponseEntity.badRequest().body(response);
@@ -278,25 +262,11 @@ public class QuizController {
                     System.out.println("✓ IsAIGenerated set: " + isAIGenerated);
                 }
             }
-            
-            // Log what we're about to update
-            System.out.println("📝 Quiz details prepared for update:");
-            System.out.println("   - Title: " + quizDetails.getTitle());
-            System.out.println("   - Subject: " + quizDetails.getSubject());
-            System.out.println("   - Niveau: " + quizDetails.getNiveau());
-            System.out.println("   - Difficulty: " + quizDetails.getDifficulty());
-            System.out.println("   - TimeLimit: " + quizDetails.getTimeLimit());
-            System.out.println("   - IsAIGenerated: " + quizDetails.getIsAIGenerated());
-            
-            // Call service to update
             QuizDto updated = quizService.updateQuiz(id, quizDetails);
             
             if (updated == null) {
                 throw new RuntimeException("Échec de la mise à jour - service returned null");
-            }
-            
-            System.out.println("✅ Quiz mis à jour avec succès: " + updated.getId());
-            
+            }            
             response.put("success", true);
             response.put("data", updated);
             response.put("message", "Quiz mis à jour avec succès");
@@ -304,14 +274,12 @@ public class QuizController {
             return ResponseEntity.ok(response);
             
         } catch (RuntimeException e) {
-            System.err.println("❌ Runtime error in updateQuiz: " + e.getMessage());
             e.printStackTrace();
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             
         } catch (Exception e) {
-            System.err.println("💥 Unexpected error in updateQuiz: " + e.getMessage());
             e.printStackTrace();
             response.put("success", false);
             response.put("message", "Erreur inattendue lors de la mise à jour: " + e.getMessage());

@@ -53,19 +53,18 @@ public class UserService {
         }
         user.setRole(userDetails.getRole());
         user.setIsActive(userDetails.getIsActive());
-        // ✅ NOUVEAU : Mettre à jour le niveau
         user.setNiveau(userDetails.getNiveau());
         
         User updatedUser = userRepository.save(user);
         return new UserDto(updatedUser);
     }
     
-    // ✅ NOUVEAU : Méthode pour mettre à jour uniquement le niveau
+
     public UserDto updateUserLevel(String email, String niveau) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Vérifier que c'est un étudiant
+  
         if (!User.Role.USER.equals(user.getRole())) {
             throw new RuntimeException("Seuls les étudiants peuvent avoir un niveau scolaire");
         }
@@ -75,7 +74,7 @@ public class UserService {
         return new UserDto(updatedUser);
     }
     
-    // ✅ NOUVEAU : Méthode pour récupérer les utilisateurs par niveau
+    
     public List<UserDto> getUsersByLevel(String niveau) {
         return userRepository.findAll().stream()
                 .filter(user -> User.Role.USER.equals(user.getRole()) && niveau.equals(user.getNiveau()))

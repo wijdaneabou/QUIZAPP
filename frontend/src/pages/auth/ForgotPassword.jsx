@@ -16,7 +16,6 @@ const ForgotPasswordPage = ({ onSwitchToLogin }) => {
     setError('');
 
     try {
-      // Appel réel à l'API au lieu de la simulation
       await sendPasswordResetEmail(email);
       setSuccess(true);
     } catch (err) {
@@ -32,11 +31,9 @@ const ForgotPasswordPage = ({ onSwitchToLogin }) => {
 
     try {
       await sendPasswordResetEmail(email);
-      // Optionnel : afficher un message de confirmation
-      console.log('Email renvoyé avec succès');
     } catch (err) {
       setError(err.message || 'Erreur lors du renvoi de l\'email');
-      setSuccess(false); // Retourner au formulaire en cas d'erreur
+      setSuccess(false); 
     } finally {
       setLoading(false);
     }

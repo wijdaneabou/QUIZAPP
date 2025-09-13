@@ -14,11 +14,10 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Redirection basée sur le rôle de l'utilisateur
       if (user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/'); // Page d'accueil pour les étudiants
+        navigate('/'); 
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -29,12 +28,10 @@ const LoginPage = () => {
 
     try {
       const userData = await login(email, password);
-      
-      // Redirection immédiate après connexion réussie
       if (userData.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/'); // Page d'accueil pour les étudiants
+        navigate('/'); 
       }
     } catch (err) {
       setError(err.message);
@@ -42,11 +39,10 @@ const LoginPage = () => {
   };
 
   const handleGoogleSuccess = (userData) => {
-    // Redirection basée sur le rôle après connexion Google
     if (userData.role === 'admin') {
       navigate('/admin/dashboard');
     } else {
-      navigate('/'); // Page d'accueil pour les étudiants
+      navigate('/'); 
     }
   };
 
@@ -173,7 +169,6 @@ const LoginPage = () => {
           </div>
         </form>
 
-        {/* Séparateur */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300" />
@@ -185,7 +180,6 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Google Login */}
         <div className="mt-6">
           <GoogleLoginButton 
             onSuccess={handleGoogleSuccess}

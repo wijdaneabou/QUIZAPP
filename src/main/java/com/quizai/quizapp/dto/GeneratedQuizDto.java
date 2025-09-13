@@ -5,10 +5,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.util.List;
 
-/**
- * DTO pour la génération de quiz via IA
- * Support: choix unique, choix multiples, vrai/faux
- */
+
 public class GeneratedQuizDto {
 
     @Size(min = 2, max = 100, message = "Le sujet doit contenir entre 2 et 100 caractères")
@@ -33,10 +30,10 @@ public class GeneratedQuizDto {
     @Size(max = 200, message = "Le titre ne peut pas dépasser 200 caractères")
     private String title;
 
-    // Types de questions supportés
     private List<String> questionTypes;
 
-    // Constructeurs
+    
+
     public GeneratedQuizDto() {}
 
     public GeneratedQuizDto(String subject, int numberOfQuestions, String difficulty) {
@@ -118,7 +115,6 @@ public class GeneratedQuizDto {
 
     /**
      * Classe interne représentant une question générée par l'IA
-     * Support: single_choice, multiple_choice, true_false
      */
     public static class GeneratedQuestion {
         
@@ -128,24 +124,20 @@ public class GeneratedQuizDto {
         @NotNull(message = "Les options sont requises")
         @Size(min = 2, max = 6, message = "Il doit y avoir entre 2 et 6 options")
         private List<String> options;
-
-        // Pour compatibilité avec l'ancien format (choix unique)
         @JsonProperty("correct_answer")
         private Integer correctAnswer;
 
-        // Nouveau: pour les questions à choix multiples (plusieurs réponses correctes)
         @JsonProperty("correct_answers")
         private List<Integer> correctAnswers;
 
         @Size(max = 500, message = "L'explication ne peut pas dépasser 500 caractères")
         private String explanation;
 
-        // Type de question: single_choice, multiple_choice, true_false
         @Pattern(regexp = "(?i)(single_choice|multiple_choice|true_false)", 
                 message = "Le type doit être single_choice, multiple_choice ou true_false")
-        private String type = "single_choice"; // Valeur par défaut
+        private String type = "single_choice";
 
-        // Constructeurs
+       
         public GeneratedQuestion() {}
 
         public GeneratedQuestion(String question, List<String> options, int correctAnswer, String explanation) {
@@ -178,7 +170,7 @@ public class GeneratedQuizDto {
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
 
-        // Validation métier adaptée au type
+        
         public boolean isValidCorrectAnswer() {
             if (options == null) return false;
             
@@ -206,7 +198,7 @@ public class GeneratedQuizDto {
                     if (correctAnswers != null && !correctAnswers.isEmpty()) {
                         return correctAnswers.stream().allMatch(idx -> idx >= 0 && idx < options.size());
                     }
-                    // Fallback sur correctAnswer si correctAnswers n'est pas défini
+                 
                     if (correctAnswer != null) {
                         return correctAnswer >= 0 && correctAnswer < options.size();
                     }
@@ -217,7 +209,7 @@ public class GeneratedQuizDto {
             }
         }
 
-        // Méthode utilitaire pour obtenir toutes les réponses correctes sous forme de liste
+       
         public List<Integer> getAllCorrectAnswers() {
             if (correctAnswers != null && !correctAnswers.isEmpty()) {
                 return correctAnswers;

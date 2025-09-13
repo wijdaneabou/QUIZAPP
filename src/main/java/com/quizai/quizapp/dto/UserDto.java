@@ -14,7 +14,6 @@ public class UserDto {
     private String email;
     private User.Role role;
     private Boolean isActive;
-    // ✅ NOUVEAU CHAMP : Niveau scolaire
     private String niveau;
     
     public UserDto(User user) {
@@ -23,6 +22,6 @@ public class UserDto {
         this.email = user.getEmail();
         this.role = user.getRole();
         this.isActive = user.getIsActive();
-        this.niveau = user.getNiveau(); // ✅ Ajout du niveau
+        this.niveau = user.getNiveau(); 
     }
 }

@@ -7,9 +7,6 @@ import lombok.AllArgsConstructor;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// ============================================================================
-// DTO POUR LA REPRÉSENTATION ET CRÉATION DES QUESTIONS
-// ============================================================================
 
 @Data
 @NoArgsConstructor
@@ -23,10 +20,7 @@ public class QuestionDto {
     private Integer points;
     private List<AnswerDto> answers;
 
- 
-    // ========================================================================
-    // CONSTRUCTEUR DEPUIS UNE ENTITÉ QUESTION
-    // ========================================================================
+
     
     public QuestionDto(Question question) {
         this.id = question.getId();
