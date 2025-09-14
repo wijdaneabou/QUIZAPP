@@ -52,7 +52,7 @@ const QuizDetailPage = () => {
     loadResultDetail();
   }, [loadResultDetail]);
 
-  const handleBack = () => navigate('/results');
+  const handleBack = () => navigate('student/results');
 
   const formatTime = (seconds) => {
     if (seconds === null || seconds === undefined) return 'N/A';
@@ -354,16 +354,14 @@ const QuestionDetailComparison = ({ answer, index, quizService }) => {
     questionId
   } = answer;
 
-  // Utiliser le service pour récupérer les réponses correctes si nécessaire
   const getCorrectAnswersFromService = (questionData) => {
     if (quizService && questionData) {
-      // Utiliser la méthode du service results pour extraire les bonnes réponses
+
       return resultsService.findCorrectAnswers(questionData);
     }
     return [];
   };
 
-  // Normalisation améliorée des réponses
   const normalizeAnswer = (ans) => {
     if (!ans) return [];
     if (Array.isArray(ans)) return ans.map(a => String(a).trim()).filter(a => a.length > 0);
@@ -383,39 +381,23 @@ const QuestionDetailComparison = ({ answer, index, quizService }) => {
   const selectedAnswersArray = normalizeAnswer(selectedAnswer);
   let correctAnswersArray = [];
   
-  // PRIORITÉ ABSOLUE : Utiliser le tableau correctAnswers s'il existe
+
   if (correctAnswers && Array.isArray(correctAnswers) && correctAnswers.length > 0) {
     correctAnswersArray = correctAnswers.map(a => String(a).trim()).filter(a => a.length > 0);
   } 
-  // Fallback 1 : Utiliser le service pour extraire les réponses depuis les données de question
+
   else if (answer.answers && Array.isArray(answer.answers)) {
     correctAnswersArray = getCorrectAnswersFromService(answer);
   }
-  // Fallback 2 : Utiliser correctAnswer comme chaîne
+  
   else if (correctAnswer) {
     correctAnswersArray = normalizeAnswer(correctAnswer);
-  }
-
-  // Debug logging pour le développement
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`🔍 Question ${index + 1} Debug:`, {
-      questionId,
-      questionText: question,
-      selectedAnswersArray,
-      correctAnswersArray,
-      originalCorrectAnswers: correctAnswers,
-      originalCorrectAnswer: correctAnswer,
-      isMultipleChoiceProp: isMultipleChoice,
-      isCorrectProp: isCorrect,
-      hasAnswersData: answer.answers && answer.answers.length > 0,
-      hasOptions: options && options.length > 0,
-    });
   }
 
   // Auto-détection du type de question
   const isMultiChoice = isMultipleChoice || correctAnswersArray.length > 1;
 
-  // Vérification de l'exactitude avec la logique du service
+vice
   const verifyAnswerCorrectness = () => {
     if (correctAnswersArray.length === 0) {
       console.warn(`Question ${index + 1}: Aucune réponse correcte définie`);
@@ -424,10 +406,9 @@ const QuestionDetailComparison = ({ answer, index, quizService }) => {
     return resultsService.isAnswerCorrect(selectedAnswer, correctAnswersArray, isMultiChoice);
   };
 
-  // Utiliser la vérification du service si isCorrect semble incorrecte
   const isActuallyCorrect = isCorrect !== undefined ? isCorrect : verifyAnswerCorrectness();
 
-  // Fonctions de vérification pour les options
+
   const isAnswerCorrectOption = (option) => {
     return correctAnswersArray.some(correct => 
       String(correct).toLowerCase().trim() === String(option).toLowerCase().trim()
