@@ -32,7 +32,8 @@ public class GeneratedQuizDto {
 
     private List<String> questionTypes;
 
-    
+    @JsonProperty("creatorId")
+    private Long creatorId;
 
     public GeneratedQuizDto() {}
 
@@ -59,6 +60,9 @@ public class GeneratedQuizDto {
     public void setTitle(String title) { this.title = title; }
     public List<String> getQuestionTypes() { return questionTypes; }
     public void setQuestionTypes(List<String> questionTypes) { this.questionTypes = questionTypes; }
+    public Long getCreatorId() { return creatorId; }
+    public void setCreatorId(Long creatorId) { this.creatorId = creatorId; }
+
 
     @Override
     public String toString() {

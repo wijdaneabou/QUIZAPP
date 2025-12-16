@@ -4,6 +4,7 @@ import { Edit, Trash2, Plus, ArrowUp, ArrowDown, Save, Send, ArrowLeft, Sparkles
 import { Dialog, Transition } from '@headlessui/react';
 import { getQuizById, updateQuiz } from '../../services/quizService';
 import api from '../../api/axios';
+import { authService } from '../../services/authService';
 
 const QuizPreviewPage = () => {
   const { id: quizId } = useParams();
@@ -152,7 +153,24 @@ const QuizPreviewPage = () => {
       }
     }
   };
-
+  // Ajoutez cette fonction après les autres fonctions handle dans votre composant
+  const handleAddQuestion = () => {
+    const newQuestion = {
+      id: Date.now(), // ID temporaire pour les nouvelles questions
+      questionText: '',
+      points: 1,
+      explanation: '',
+      answers: [
+        { id: Date.now() + 1, answerText: '', isCorrect: false },
+        { id: Date.now() + 2, answerText: '', isCorrect: false },
+        { id: Date.now() + 3, answerText: '', isCorrect: false },
+        { id: Date.now() + 4, answerText: '', isCorrect: false }
+      ]
+    };
+    
+    setEditingQuestion(newQuestion);
+    setIsEditModalOpen(true);
+  };
   const handlePublish = async () => {
     if (!quiz) {
       alert('Aucun quiz à publier');
@@ -160,7 +178,17 @@ const QuizPreviewPage = () => {
     }
   
     try {
-      console.log('Publication du quiz:', quiz.id);
+      // Récupérer le creatorId depuis authService
+      let creatorId = quiz.creatorId;
+      
+      try {
+        const currentUser = authService.getCurrentUser();
+        if (currentUser && currentUser.id) {
+          creatorId = parseInt(currentUser.id);
+        }
+      } catch (authError) {
+        console.warn('authService non disponible:', authError);
+      }
       
       const publishData = {
         title: quiz.title || 'Quiz sans titre',
@@ -168,12 +196,11 @@ const QuizPreviewPage = () => {
         niveau: quiz.niveau || 'Débutant',
         difficulty: quiz.difficulty || 'MEDIUM',
         timeLimit: quiz.timeLimit || 30,
-        isAIGenerated: quiz.isAIGenerated || false
+        isAIGenerated: quiz.isAIGenerated || false,
+        creatorId: creatorId // Utiliser le creatorId récupéré
       };
-  
       const response = await updateQuiz(quiz.id, publishData);
-      alert('Quiz mis à jour avec succès !');
-      
+    
       setQuiz(prev => ({ ...prev, ...response, isPublished: true }));
       await fetchQuizData();
       navigate('/admin/quiz-management');
@@ -201,8 +228,6 @@ const QuizPreviewPage = () => {
         isAIGenerated: Boolean(quiz.isAIGenerated) || false
       };   
       const response = await updateQuiz(quiz.id, saveData);
-   
-      alert('Quiz sauvegardé avec succès ! ');
       navigate('/admin/quiz-management');
       
       if (response && response.id) {
@@ -596,14 +621,17 @@ const QuizPreviewPage = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-800">Questions du Quiz</h2>
-            <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition">
+            <button 
+              onClick={handleAddQuestion}
+
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition">
               <Plus className="w-4 h-4 mr-2" />
               Ajouter une question
             </button>
           </div>
           {localQuestions.length === 0 ? (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-              <div className="text-yellow-600 mb-2">⚠️ Aucune question trouvée</div>
+              <div className="text-yellow-600 mb-2"> Aucune question trouvée</div>
               <p className="text-yellow-700 text-sm mb-4">
                 Ce quiz ne contient pas encore de questions.
               </p>

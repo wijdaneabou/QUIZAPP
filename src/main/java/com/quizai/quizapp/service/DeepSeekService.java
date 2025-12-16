@@ -21,8 +21,8 @@ import java.util.List;
 public class DeepSeekService {
 
     private static final Logger logger = LoggerFactory.getLogger(DeepSeekService.class);
-    private final WebClient webClient;
-    private final ObjectMapper objectMapper;
+    private final WebClient webClient; //client HTTP de Spring pour appeler des APIs externes
+    private final ObjectMapper objectMapper;//outil pour convertir JSON ↔ objets Java
 
     @Value("${deepseek.api.key}")
     private String apiKey;
@@ -30,15 +30,18 @@ public class DeepSeekService {
     @Value("${deepseek.api.url:https://api.deepseek.com/v1/chat/completions}")
     private String apiUrl;
 
-    @Value("${deepseek.api.timeout:30}")
+    @Value("${deepseek.api.timeout:30}") //Temps d'attente maximal avant d'abandonner une requête 
     private int timeoutSeconds;
 
+    //Spring crée automatiquement le WebClient et l'ObjectMapper au démarrage.
     public DeepSeekService(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))
                 .build();
         this.objectMapper = objectMapper;
     }
+
+    // fct prancipale pour genrer des qsts
     public Mono<GeneratedQuizDto.GeneratedQuizResponse> generateQuizFromPrompt(
             String subject, int numberOfQuestions, String difficulty, 
             String instructions, String niveau, String topic, List<String> questionTypes) {
@@ -46,8 +49,10 @@ public class DeepSeekService {
         logger.info("Génération de quiz - Sujet: {}, Questions: {}, Difficulté: {}, Niveau: {}, Types: {}", 
                    subject, numberOfQuestions, difficulty, niveau, questionTypes);
 
+        // Étape 1 : prompt qui va guider l'IA           
         String prompt = buildQuizPrompt(subject, numberOfQuestions, difficulty, instructions, niveau, topic, questionTypes);
 
+        // Étape 2 : corps de la requête JSON         
         Map<String, Object> requestBody = Map.of(
             "model", "deepseek-chat",
             "messages", List.of(
@@ -55,25 +60,27 @@ public class DeepSeekService {
                 Map.of("role", "user", "content", prompt)
             ),
             "temperature", 0.7,
-            "max_tokens", 4000,
-            "response_format", Map.of("type", "json_object")
+            "max_tokens", 4000, //Nombre maximum de mots dans la réponse
+            "response_format", Map.of("type", "json_object") //  Force que la reponse en  JSON 
         );
+        // Étape 3 : Envoi de la requête HTTP POST 
         return webClient.post()
                 .uri(apiUrl)
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
-                .bodyValue(requestBody)
-                .retrieve()
+                .bodyValue(requestBody) //notre prompt
+                .retrieve() // Lance la requête
                 .onStatus(HttpStatusCode::isError, this::handleErrorResponse)
                 .bodyToMono(String.class)
                 .timeout(Duration.ofSeconds(timeoutSeconds))
                 .retryWhen(Retry.backoff(2, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.TooManyRequests))
-                .flatMap(this::parseQuizResponse)
+                .flatMap(this::parseQuizResponse) // Parse la réponse JSON pour extraire le quiz
                 .doOnSuccess(response -> logger.info("Quiz généré avec succès: {} questions", 
                             response.getQuestions() != null ? response.getQuestions().size() : 0))
                 .doOnError(error -> logger.error("Erreur lors de la génération du quiz: {}", error.getMessage()));
     }
+    //le prompt detaille
     private String buildQuizPrompt(String subject, int numberOfQuestions, String difficulty, 
                                  String instructions, String niveau, String topic, List<String> questionTypes) {
         
@@ -144,7 +151,7 @@ public class DeepSeekService {
             """, numberOfQuestions, subject, topic, niveau, difficultyText, 
                 additionalInstructions, typeDistribution, niveau, difficultyText);
     }
-
+    //répartir les questions entre les différents types.
     private String buildTypeDistribution(List<String> questionTypes, int totalQuestions) {
         if (questionTypes == null || questionTypes.isEmpty()) {
             return "Choix unique uniquement";
@@ -217,6 +224,7 @@ public class DeepSeekService {
         try {
             logger.debug("Réponse brute de DeepSeek: {}", response);
 
+            //Étape 2 : Navigation dans JSON pour extraire le contenu
             JsonNode rootNode = objectMapper.readTree(response);
             JsonNode contentNode = rootNode
                     .path("choices")
@@ -226,13 +234,19 @@ public class DeepSeekService {
             if (contentNode.isMissingNode()) {
                 return Mono.error(new RuntimeException("Pas de contenu dans la réponse DeepSeek"));
             }
+
+           // Étape 3 : Extraire la string JSON 
             String content = contentNode.asText();
             logger.debug("Contenu extrait: {}", content);
 
+            // Étape 4 : Parser pour obtenir le vrai quiz
             JsonNode quizNode = objectMapper.readTree(content);
+
+            //Étape 5 : Convertir le JSON en objet Java 
             GeneratedQuizDto.GeneratedQuizResponse quizResponse = 
                     objectMapper.treeToValue(quizNode, GeneratedQuizDto.GeneratedQuizResponse.class);
 
+            // Étape 6 : Validation du quiz
             validateQuizResponse(quizResponse);
             return Mono.just(quizResponse);
 
@@ -244,23 +258,31 @@ public class DeepSeekService {
             return Mono.error(new RuntimeException("Erreur lors du traitement de la réponse: " + e.getMessage()));
         }
     }
+
+    //verification que le quiz généré par l'IA respecte tous les règles.
     private void validateQuizResponse(GeneratedQuizDto.GeneratedQuizResponse response) {
+        // Règle 1 : Le quiz doit exister
         if (response == null) {
             throw new IllegalArgumentException("Réponse de quiz nulle");
         }
+        // Règle 2 : Le quiz doit contenir au moins une question
         if (response.getQuestions() == null || response.getQuestions().isEmpty()) {
             throw new IllegalArgumentException("Aucune question générée");
         }
+
         for (int i = 0; i < response.getQuestions().size(); i++) {
             GeneratedQuizDto.GeneratedQuestion question = response.getQuestions().get(i);
-            
+
+             // Règle 3 : La question doit etre non vide
             if (question.getQuestion() == null || question.getQuestion().trim().isEmpty()) {
                 throw new IllegalArgumentException("Question " + (i + 1) + " vide");
             }
 
+            // Règle 4 : La question doit avoir des options
             if (question.getOptions() == null || question.getOptions().isEmpty()) {
                 throw new IllegalArgumentException("Question " + (i + 1) + " sans options");
             }
+
             String questionType = question.getType() != null ? question.getType().toLowerCase() : "single_choice";
             
             switch (questionType) {
@@ -280,6 +302,7 @@ public class DeepSeekService {
                 default:
                     throw new IllegalArgumentException("Type de question non reconnu: " + questionType);
             }
+             // Règle 6 : Validation des index des réponses correctes
             if (!question.isValidCorrectAnswer()) {
                 throw new IllegalArgumentException("Réponse(s) correcte(s) invalide(s) pour la question " + (i + 1) + " de type " + questionType);
             }
@@ -291,12 +314,15 @@ public class DeepSeekService {
             }
         }
     }
+
     public Mono<GeneratedQuizDto.GeneratedQuizResponse> generateQuizFromPrompt(
             String subject, int numberOfQuestions, String difficulty, 
             String instructions, String niveau, String topic) {
         return generateQuizFromPrompt(subject, numberOfQuestions, difficulty, 
                                     instructions, niveau, topic, List.of("single_choice"));
     }
+
+    
     public Mono<Boolean> testConnection() {
         Map<String, Object> testRequest = Map.of(
             "model", "deepseek-chat",

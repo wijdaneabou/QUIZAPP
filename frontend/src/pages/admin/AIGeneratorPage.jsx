@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, RefreshCw, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import { authService } from '../../services/authService';
 
 const AIGeneratorPage = ({ 
   setQuestions = () => {}, 
@@ -18,7 +19,7 @@ const AIGeneratorPage = ({
     niveau: '',
     difficulty: 'medium',
     questionCount: 10,
-    questionTypes: ['single_choice'], // Changed from 'multiple_choice' to 'single_choice'
+    questionTypes: ['single_choice'], 
     instructions: ''
   });
 
@@ -78,6 +79,8 @@ const AIGeneratorPage = ({
     setAiGenerating(true);
     setErrors({});
 
+    const currentUser = authService.getCurrentUser();
+    const creatorId = currentUser?.id;
     try {
       console.log('Sending request with question types:', aiPrompt.questionTypes);
       
@@ -89,7 +92,8 @@ const AIGeneratorPage = ({
         instructions: aiPrompt.instructions,
         niveau: aiPrompt.niveau,
         topic: aiPrompt.topic,
-        questionTypes: aiPrompt.questionTypes // This now sends the correct types
+        questionTypes: aiPrompt.questionTypes, // This now sends the correct types
+        creatorId: creatorId
       }, {
         headers: { 'Content-Type': 'application/json' },
         timeout: 90000 
@@ -142,7 +146,6 @@ const AIGeneratorPage = ({
         }
         
         const navigationUrl = `/admin/quiz-preview/${finalQuizId}`;
-        console.log('Navigating to:', navigationUrl);
         navigate(navigationUrl);
       } else {
         console.error('Aucun ID dans formattedQuiz:', formattedQuiz);

@@ -85,8 +85,6 @@ const RegisterPage = ({ onSwitchToLogin }) => {
     setError('');
     
     try {
-      console.log('Données d\'inscription:', formData);
-      
       const backendRole = formData.role === 'student' ? 'USER' : 'ADMIN';
       const userData = {
         name: formData.name,
@@ -130,33 +128,7 @@ const RegisterPage = ({ onSwitchToLogin }) => {
     setGoogleLoading(false);
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 rounded-full shadow-lg">
-              <CheckCircle className="h-12 w-12 text-white" />
-            </div>
-          </div>
-          <h2 className="text-3xl font-extrabold text-gray-900">Inscription réussie !</h2>
-          <p className="text-gray-700">
-            Votre compte a été créé avec succès. Vous allez être redirigé dans quelques secondes...
-          </p>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="mt-6 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
-          >
-            Continuer vers le tableau de bord
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full space-y-8">

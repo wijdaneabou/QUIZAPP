@@ -55,10 +55,56 @@ const QuizDetailPage = () => {
   const handleBack = () => navigate('student/results');
 
   const formatTime = (seconds) => {
-    if (seconds === null || seconds === undefined) return 'N/A';
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    console.log('🕐 formatTime called with:', seconds, 'Type:', typeof seconds);
+    
+    // Si la valeur est null, undefined, ou une chaîne vide
+    if (seconds === null || seconds === undefined || seconds === '') {
+      console.log('❌ Value is null, undefined, or empty string');
+      return 'N/A';
+    }
+    
+    // Convertir en nombre
+    const numSeconds = Number(seconds);
+    
+    // Vérifier si c'est un nombre valide
+    if (isNaN(numSeconds) || numSeconds < 0) {
+      console.log('❌ Invalid number:', numSeconds);
+      return 'N/A';
+    }
+    
+    const totalSeconds = Math.floor(numSeconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const formatted = `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    console.log('✅ Formatted time:', formatted);
+    return formatted;
+  };
+
+  // Fonction pour obtenir le temps passé depuis différentes propriétés possibles
+  const getTimeSpent = (resultData) => {
+    // Liste des noms possibles pour le temps passé
+    const possibleTimeFields = [
+      'timeSpent', 
+      'time_spent', 
+      'duration', 
+      'elapsedTime', 
+      'elapsed_time',
+      'timeTaken',
+      'time_taken',
+      'totalTime',
+      'total_time'
+    ];
+    
+    for (const field of possibleTimeFields) {
+      if (resultData[field] !== undefined && resultData[field] !== null) {
+        console.log(`✅ Temps trouvé dans la propriété: ${field} = ${resultData[field]}`);
+        return resultData[field];
+      }
+    }
+    
+    console.log('⚠️ Aucune propriété de temps trouvée dans:', Object.keys(resultData));
+    return null;
   };
 
   const getPerformanceMessage = (percentage) => {
@@ -69,16 +115,6 @@ const QuizDetailPage = () => {
     return { message: "Il faut réviser davantage", color: "text-red-600", icon: AlertTriangle };
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h3 className="text-lg font-semibold">Chargement des détails...</h3>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -122,29 +158,7 @@ const QuizDetailPage = () => {
               <ArrowLeft className="w-5 h-5 mr-2" /> Retour aux résultats
             </button>
           </div>
-
-          {/* Informations du résultat */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center mb-2">
-                    <BarChart3 className="w-6 h-6 mr-2" />
-                    <span className="text-blue-100 font-medium">Résultat détaillé</span>
-                  </div>
-                  <p className="text-blue-100 text-lg">{result.subject}</p>
-                </div>
-                
-                <div className="text-right">
-                  <div className="text-3xl font-bold mb-1">{Math.round(result.percentage)}%</div>
-                  <div className={`flex items-center ${performanceMsg.color}`}>
-                    <PerformanceIcon className="w-4 h-4 mr-1" />
-                    <span className="text-blue-100">{result.score}/{result.total}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden"> 
             {/* Statistiques détaillées */}
             <div className="p-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -283,7 +297,6 @@ const QuizDetailPage = () => {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold">Aucun détail de réponse disponible</h3>
             <p className="text-gray-600 mt-2">Les réponses détaillées pour ce résultat n'ont pas pu être chargées.</p>
           </div>
@@ -397,7 +410,6 @@ const QuestionDetailComparison = ({ answer, index, quizService }) => {
   // Auto-détection du type de question
   const isMultiChoice = isMultipleChoice || correctAnswersArray.length > 1;
 
-vice
   const verifyAnswerCorrectness = () => {
     if (correctAnswersArray.length === 0) {
       console.warn(`Question ${index + 1}: Aucune réponse correcte définie`);
@@ -570,14 +582,13 @@ vice
                         </ul>
                       )
                     ) : (
-                      <span className="text-red-500 italic">⚠️ Aucune réponse correcte définie</span>
+                      <span className="text-red-500 italic">Aucune réponse correcte définie</span>
                     )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
           {/* Analyse détaillée pour choix multiples */}
           {isMultiChoice && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -616,7 +627,7 @@ vice
                       
                       {selectedAnswersArray.length === 0 && correctAnswersArray.length > 0 && (
                         <div className="text-xs flex items-center text-red-600">
-                          ✗ Aucune réponse n'a été donnée pour cette question à choix multiples.
+                           Aucune réponse n'a été donnée pour cette question à choix multiples.
                         </div>
                       )}
                     </div>
@@ -624,9 +635,9 @@ vice
                     <div className="mt-2 pt-2 border-t border-yellow-300">
                       <strong>Statut final :</strong>
                       {isActuallyCorrect ? (
-                        <span className="text-green-600 font-medium ml-1">✓ Réponse complètement correcte</span>
+                        <span className="text-green-600 font-medium ml-1"> Réponse complètement correcte</span>
                       ) : (
-                        <span className="text-red-600 font-medium ml-1">✗ Réponse incomplète ou incorrecte</span>
+                        <span className="text-red-600 font-medium ml-1"> Réponse incomplète ou incorrecte</span>
                       )}
                     </div>
                   </div>
@@ -641,7 +652,6 @@ vice
       {explanation && (
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
           <div className="flex items-start">
-            <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
             <div>
               <p className="font-semibold text-blue-800 mb-1">Explication :</p>
               <p className="text-blue-700 text-sm">{explanation}</p>

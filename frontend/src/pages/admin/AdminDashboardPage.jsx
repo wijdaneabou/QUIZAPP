@@ -80,36 +80,166 @@ const dashboardService = {
   },
 
   getUserGrowth: async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Ajouter un timestamp pour éviter le cache
+    const response = await fetch(`${API_BASE_URL}/users?t=${Date.now()}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-cache' // Force le rechargement
+    });
 
-      if (!response.ok) throw new Error('Erreur lors de la récupération des utilisateurs');
-      
-      const users = await response.json();
-      
-  
-      const now = new Date();
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-      const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
-      const usersThisMonth = users.filter(user => new Date(user.dateCreation) >= lastMonth).length;
-      const usersThisWeek = users.filter(user => new Date(user.dateCreation) >= lastWeek).length;
-      
-      return {
-        thisMonth: usersThisMonth,
-        thisWeek: usersThisWeek,
-        percentageChange: users.length > 0 ? Math.round((usersThisMonth / users.length) * 100) : 0
-      };
-    } catch (error) {
-      throw new Error(error.message);
+    if (!response.ok) throw new Error('Erreur lors de la récupération des utilisateurs');
+    
+    const users = await response.json();
+    
+    // DEBUG CRITIQUE : Afficher les 3 premiers utilisateurs
+    console.log('=== DEBUG UTILISATEURS ===');
+    console.log('Nombre total:', users.length);
+    console.log('Premiers utilisateurs:', users.slice(0, 3));
+    
+    // Vérifier le nom exact du champ de date
+    if (users.length > 0) {
+      console.log('Champs disponibles:', Object.keys(users[0]));
+      console.log('dateCreation:', users[0].dateCreation);
+      console.log('createdAt:', users[0].createdAt);
+      console.log('created_at:', users[0].created_at);
+      console.log('date:', users[0].date);
     }
+    
+    // Si pas d'utilisateurs, retourner des zéros
+    if (!users || users.length === 0) {
+      return {
+        thisMonth: 0,
+        lastMonth: 0,
+        thisWeek: 0,
+        lastWeek: 0,
+        last30Days: 0,
+        previous30Days: 0,
+        monthlyPercentageChange: 0,
+        weeklyPercentageChange: 0,
+        percentageChange: 0
+      };
+    }
+    
+    const now = new Date();
+    console.log('Date actuelle:', now);
+    
+    // APPROCHE 1: Derniers 30 jours vs 30 jours précédents (plus flexible)
+    const last30DaysDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const last60DaysDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    
+    console.log('Filtre 30 jours depuis:', last30DaysDate);
+    
+    // Essayer différents noms de champs possibles
+    const usersLast30Days = users.filter(user => {
+      const dateField = user.dateCreation || user.createdAt || user.created_at || user.date;
+      if (!dateField) {
+        console.warn('Pas de date trouvée pour user:', user.id);
+        return false;
+      }
+      const userDate = new Date(dateField);
+      const isRecent = userDate >= last30DaysDate && userDate <= now;
+      if (isRecent) {
+        console.log('✅ User récent trouvé:', user.name, userDate);
+      }
+      return isRecent;
+    }).length;
+    
+    const usersPrevious30Days = users.filter(user => {
+      const dateField = user.dateCreation || user.createdAt || user.created_at || user.date;
+      if (!dateField) return false;
+      const userDate = new Date(dateField);
+      return userDate >= last60DaysDate && userDate < last30DaysDate;
+    }).length;
+    
+    // APPROCHE 2: Derniers 7 jours vs 7 jours précédents
+    const last7DaysDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last14DaysDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    
+    console.log('Filtre 7 jours depuis:', last7DaysDate);
+    
+    const usersLast7Days = users.filter(user => {
+      const dateField = user.dateCreation || user.createdAt || user.created_at || user.date;
+      if (!dateField) return false;
+      const userDate = new Date(dateField);
+      const isRecent = userDate >= last7DaysDate && userDate <= now;
+      if (isRecent) {
+        console.log('✅ User cette semaine:', user.name, userDate);
+      }
+      return isRecent;
+    }).length;
+    
+    const usersPrevious7Days = users.filter(user => {
+      const dateField = user.dateCreation || user.createdAt || user.created_at || user.date;
+      if (!dateField) return false;
+      const userDate = new Date(dateField);
+      return userDate >= last14DaysDate && userDate < last7DaysDate;
+    }).length;
+    
+    // Calcul des mois calendaires pour affichage
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    
+    const usersThisMonth = users.filter(user => {
+      const dateField = user.dateCreation || user.createdAt || user.created_at || user.date;
+      if (!dateField) return false;
+      const userDate = new Date(dateField);
+      return userDate >= startOfCurrentMonth && userDate <= now;
+    }).length;
+    
+    const usersLastMonth = users.filter(user => {
+      const dateField = user.dateCreation || user.createdAt || user.created_at || user.date;
+      if (!dateField) return false;
+      const userDate = new Date(dateField);
+      return userDate >= startOfLastMonth && userDate < startOfCurrentMonth;
+    }).length;
+    
+    // Calcul du pourcentage de croissance (30 jours)
+    let monthlyPercentageChange = 0;
+    if (usersPrevious30Days > 0) {
+      monthlyPercentageChange = Math.round(((usersLast30Days - usersPrevious30Days) / usersPrevious30Days) * 100);
+    } else if (usersLast30Days > 0) {
+      monthlyPercentageChange = 100;
+    }
+    
+    // Calcul du pourcentage de croissance (7 jours)
+    let weeklyPercentageChange = 0;
+    if (usersPrevious7Days > 0) {
+      weeklyPercentageChange = Math.round(((usersLast7Days - usersPrevious7Days) / usersPrevious7Days) * 100);
+    } else if (usersLast7Days > 0) {
+      weeklyPercentageChange = 100;
+    }
+    
+    // Debug: afficher dans la console
+    console.log('=== STATISTIQUES DE CROISSANCE ===');
+    console.log('Total utilisateurs:', users.length);
+    console.log('Derniers 30 jours:', usersLast30Days);
+    console.log('30 jours précédents:', usersPrevious30Days);
+    console.log('Derniers 7 jours:', usersLast7Days);
+    console.log('7 jours précédents:', usersPrevious7Days);
+    console.log('Croissance mensuelle:', monthlyPercentageChange + '%');
+    console.log('Croissance hebdomadaire:', weeklyPercentageChange + '%');
+    
+    return {
+      thisMonth: usersThisMonth,
+      lastMonth: usersLastMonth,
+      thisWeek: usersLast7Days,
+      lastWeek: usersPrevious7Days,
+      last30Days: usersLast30Days,
+      previous30Days: usersPrevious30Days,
+      monthlyPercentageChange: monthlyPercentageChange,
+      weeklyPercentageChange: weeklyPercentageChange,
+      percentageChange: monthlyPercentageChange
+    };
+  } catch (error) {
+    console.error('Erreur getUserGrowth:', error);
+    throw new Error(error.message);
   }
+}
 };
 
 

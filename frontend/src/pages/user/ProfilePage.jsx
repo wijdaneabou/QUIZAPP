@@ -239,16 +239,6 @@ const ProfilePage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 flex items-center justify-center">
-        <div className="text-center p-6">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <p className="text-red-600 text-lg">{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!userProfile || !userStats) {
     return (
@@ -263,7 +253,7 @@ const ProfilePage = () => {
       <div className="max-w-6xl mx-auto px-4">
     
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-          <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white">
+          <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-violet-700 text-white">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative p-8">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
@@ -285,9 +275,13 @@ const ProfilePage = () => {
                       <Trophy className="h-4 w-4 mr-2" />
                       {userProfile.role === 'ADMIN' ? 'Administrateur' : 'Étudiant'}
                     </span>
-                    <span className="inline-flex items-center px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm border border-white/20">
+                     <span className="inline-flex items-center px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm border border-white/20">
                       <Calendar className="h-4 w-4 mr-2" />
-                      Inscrit le {new Date(userProfile.joinedDate).toLocaleDateString('fr-FR')}
+                      Inscrit le {userProfile.dateCreation ? new Date(userProfile.dateCreation).toLocaleDateString('fr-FR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Date inconnue'}
                     </span>
                   </div>
                 </div>

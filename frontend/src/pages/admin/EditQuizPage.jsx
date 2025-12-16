@@ -329,7 +329,6 @@ const EditQuizPage = () => {
   
       // Récupérer le quiz
       const quizData = await quizService.getQuizById(id);
-      console.log('Quiz récupéré:', quizData);
       
       setQuiz({
         title: quizData.title || '',
@@ -425,7 +424,6 @@ const EditQuizPage = () => {
         }
       });
       
-      console.log('Questions formatées:', formattedQuestions);
       
       //  afficher les questions avec choix multiples
       formattedQuestions.forEach((q, index) => {
@@ -481,10 +479,16 @@ const EditQuizPage = () => {
   };
 
   const addQuestion = (type) => {
-    const newQuestion = createNewQuestion(type);
-    setQuestions([...questions, newQuestion]);
-    setEditingQuestion(newQuestion.id);
-  };
+  const newQuestion = createNewQuestion(type);
+  console.log('Nouvelle question créée:', newQuestion); // Pour déboguer
+  setQuestions([...questions, newQuestion]);
+  setEditingQuestion(newQuestion.id);
+  
+  // Scroll vers la nouvelle question
+  setTimeout(() => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, 100);
+};
 
   const updateQuestion = (questionId, updates) => {
     setQuestions(questions.map(q => 

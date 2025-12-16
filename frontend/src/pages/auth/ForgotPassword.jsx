@@ -4,11 +4,12 @@ import { sendPasswordResetEmail } from '../../services/emailService';
 import { useNavigate } from 'react-router-dom';
 
 const ForgotPasswordPage = ({ onSwitchToLogin }) => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -170,6 +171,7 @@ const ForgotPasswordPage = ({ onSwitchToLogin }) => {
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour à la connexion
+  
             </button>
           </div>
         </form>

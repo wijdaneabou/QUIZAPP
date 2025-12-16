@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {  Trash2, Eye, ArrowLeft, ArrowRight, Clock, BookOpen, Settings, Bot, CheckCircle, Edit3, Sparkles, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import quizService from '../../services/quizService';
+import { authService } from '../../services/authService';
 
 
 const niveaux = [
@@ -164,20 +165,20 @@ const QuestionEditor = ({ question, index, updateQuestion, deleteQuestion }) => 
         </div>
         {question.type === 'MULTIPLE_CHOICE' && (
           <div className="space-y-2">
+            <p className="text-xs text-gray-500 mb-2">Cochez une ou plusieurs réponses correctes</p>
             {question.options.map((option, optIndex) => (
               <div key={option.id} className="flex items-center space-x-3">
                 <input
-                  type="radio"
-                  name={`question_${question.id}_correct`}
+                  type="checkbox"
                   checked={option.isCorrect}
                   onChange={() => {
                     const updatedOptions = question.options.map(opt => ({
                       ...opt,
-                      isCorrect: opt.id === option.id
+                      isCorrect: opt.id === option.id ? !opt.isCorrect : opt.isCorrect
                     }));
                     updateQuestion(question.id, { options: updatedOptions });
                   }}
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 text-blue-600 rounded"
                 />
                 <input
                   type="text"
@@ -186,6 +187,9 @@ const QuestionEditor = ({ question, index, updateQuestion, deleteQuestion }) => 
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder={`Option ${optIndex + 1}`}
                 />
+                {option.isCorrect && (
+                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                )}
               </div>
             ))}
           </div>
@@ -398,231 +402,166 @@ const AddQuizPage = () => {
 
      // Version corrigée de la fonction publishQuiz
 const publishQuiz = async () => {
-  if (!validateStep(1)) {
+    if (!validateStep(1)) {
       return;
-  }
+    }
 
-  setIsPublishing(true);
-  setErrors({});
-  
-  try {
+    setIsPublishing(true);
+    setErrors({});
+    
+    try {
       // === ÉTAPE 1: Validation de l'utilisateur ===
-      const creatorId = quizService.quizTaking.getCurrentUserId();
+      let creatorId = null;
       
-      if (!creatorId || isNaN(creatorId) || creatorId <= 0) {
-  
-          creatorId = parseInt(sessionStorage.getItem('userId')) ||
-                     parseInt(localStorage.getItem('user_id')) ||
-                     parseInt(sessionStorage.getItem('user_id'));
-   
-          if (!creatorId || isNaN(creatorId) || creatorId <= 0) {
-              creatorId = 1; 
-              localStorage.setItem('userId', creatorId.toString());
-          }
+      try {
+        const currentUser = authService.getCurrentUser();
+        if (currentUser && currentUser.id) {
+          creatorId = parseInt(currentUser.id);
+        }
+      } catch (authError) {
+        console.warn('⚠️ authService non disponible:', authError);
       }
-
+      
       // === ÉTAPE 2: Validation et préparation des questions ===
       const validQuestions = questions.filter(q => {
-          if (!q.questionText || !q.questionText.trim()) {
-              console.warn('Question sans texte ignorée:', q);
-              return false;
-          }
-          
-          if (q.type === 'MULTIPLE_CHOICE') {
-              const hasValidOptions = q.options && q.options.some(opt => opt.optionText && opt.optionText.trim());
-              const hasCorrectAnswer = q.options && q.options.some(opt => opt.isCorrect);
-              
-              if (!hasValidOptions || !hasCorrectAnswer) {
-                  console.warn('Question à choix multiples invalide:', q);
-                  return false;
-              }
-              return true;
-          }
-          
-          if (q.type === 'TRUE_FALSE') {
-              const isValid = q.correctAnswer !== undefined && q.correctAnswer !== null;
-              if (!isValid) {
-                  console.warn('Question Vrai/Faux invalide:', q);
-              }
-              return isValid;
-          }
-          
-          if (q.type === 'SHORT_ANSWER') {
-              const isValid = q.correctAnswer && q.correctAnswer.trim();
-              if (!isValid) {
-                  console.warn('Question à réponse courte invalide:', q);
-              }
-              return isValid;
-          }
-          
+        if (!q.questionText || !q.questionText.trim()) {
+          console.warn('Question sans texte ignorée:', q);
           return false;
+        }
+        
+        if (q.type === 'MULTIPLE_CHOICE') {
+          const hasValidOptions = q.options && q.options.some(opt => opt.optionText && opt.optionText.trim());
+          const hasCorrectAnswer = q.options && q.options.some(opt => opt.isCorrect);
+          
+          if (!hasValidOptions || !hasCorrectAnswer) {
+            console.warn('Question à choix multiples invalide:', q);
+            return false;
+          }
+          return true;
+        }
+        
+        if (q.type === 'TRUE_FALSE') {
+          const isValid = q.correctAnswer !== undefined && q.correctAnswer !== null;
+          if (!isValid) {
+            console.warn('Question Vrai/Faux invalide:', q);
+          }
+          return isValid;
+        }
+        
+        if (q.type === 'SHORT_ANSWER') {
+          const isValid = q.correctAnswer && q.correctAnswer.trim();
+          if (!isValid) {
+            console.warn('Question à réponse courte invalide:', q);
+          }
+          return isValid;
+        }
+        
+        return false;
       });
+
       if (validQuestions.length === 0) {
-          setErrors({ 
-              publish: 'Aucune question valide trouvée. Veuillez vérifier vos questions et leurs réponses.' 
-          });
-          return;
+        setErrors({ 
+          publish: 'Aucune question valide trouvée. Veuillez vérifier vos questions et leurs réponses.' 
+        });
+        return;
       }
 
       // === ÉTAPE 3: Préparation des données du quiz ===
       const quizData = {
-          title: quiz.title.trim(),
-          subject: quiz.subject.trim(),
-          niveau: quiz.niveau,
-          difficulty: quiz.difficulty || 'EASY',
-          timeLimit: parseInt(quiz.timeLimit) || 30,
-          isAIGenerated: Boolean(quiz.isAIGenerated)
+        title: quiz.title.trim(),
+        subject: quiz.subject.trim(),
+        niveau: quiz.niveau,
+        difficulty: quiz.difficulty || 'EASY',
+        timeLimit: parseInt(quiz.timeLimit) || 30,
+        isAIGenerated: Boolean(quiz.isAIGenerated)
       };
 
 
-      // === ÉTAPE 4: Création du quiz (sans questions) ===
-
+      // === ÉTAPE 4: Création du quiz ===
       const createdQuizResponse = await quizService.createQuiz(quizData, creatorId);
       
-      
-      // Fix: Gérer les différentes structures de réponse possibles
       let createdQuiz;
       
       if (createdQuizResponse && typeof createdQuizResponse === 'object') {
-          // Structure avec success/data (nouvelle API)
-          if (createdQuizResponse.success && createdQuizResponse.data) {
-              createdQuiz = createdQuizResponse.data;
-          }
-          // Structure directe avec les propriétés du quiz
-          else if (createdQuizResponse.id || createdQuizResponse.success) {
-              createdQuiz = {
-                  id: createdQuizResponse.id,
-                  title: createdQuizResponse.title,
-                  subject: createdQuizResponse.subject,
-                  niveau: createdQuizResponse.niveau,
-                  difficulty: createdQuizResponse.difficulty,
-                  timeLimit: createdQuizResponse.timeLimit,
-                  isAIGenerated: createdQuizResponse.isAIGenerated
-              };
-          }
+        if (createdQuizResponse.success && createdQuizResponse.data) {
+          createdQuiz = createdQuizResponse.data;
+        } else if (createdQuizResponse.id || createdQuizResponse.success) {
+          createdQuiz = {
+            id: createdQuizResponse.id,
+            title: createdQuizResponse.title,
+            subject: createdQuizResponse.subject,
+            niveau: createdQuizResponse.niveau,
+            difficulty: createdQuizResponse.difficulty,
+            timeLimit: createdQuizResponse.timeLimit,
+            isAIGenerated: createdQuizResponse.isAIGenerated
+          };
+        }
       }
       
       if (!createdQuiz || !createdQuiz.id) {
-          throw new Error('Le serveur n\'a pas retourné un quiz valide avec un ID');
+        throw new Error('Le serveur n\'a pas retourné un quiz valide avec un ID');
       }
-      
 
-      // === ÉTAPE 5: Préparation des questions pour l'API ===
+      // === ÉTAPE 5: Préparation des questions ===
       const questionsPayload = validQuestions.map((q, index) => {
-          const baseQuestion = {
-              questionText: q.questionText.trim(),
-              points: parseInt(q.points) || 1,
-              questionOrder: index + 1,
-              explanation: q.explanation || null
-          };
+        const baseQuestion = {
+          questionText: q.questionText.trim(),
+          points: parseInt(q.points) || 1,
+          questionOrder: index + 1,
+          explanation: q.explanation || null
+        };
 
-          // Génération des réponses selon le type
-          if (q.type === 'MULTIPLE_CHOICE') {
-              baseQuestion.answers = q.options
-                  .filter(opt => opt.optionText && opt.optionText.trim())
-                  .map((opt, optIndex) => ({
-                      answerText: opt.optionText.trim(),
-                      isCorrect: Boolean(opt.isCorrect),
-                      choiceOrder: optIndex + 1
-                  }));
-          } else if (q.type === 'TRUE_FALSE') {
-              baseQuestion.answers = [
-                  { 
-                      answerText: "Vrai", 
-                      isCorrect: q.correctAnswer === true, 
-                      choiceOrder: 1 
-                  },
-                  { 
-                      answerText: "Faux", 
-                      isCorrect: q.correctAnswer === false, 
-                      choiceOrder: 2 
-                  }
-              ];
-          } else if (q.type === 'SHORT_ANSWER') {
-              baseQuestion.answers = [{
-                  answerText: q.correctAnswer.trim(),
-                  isCorrect: true,
-                  choiceOrder: 1
-              }];
-          }
+        if (q.type === 'MULTIPLE_CHOICE') {
+          baseQuestion.answers = q.options
+            .filter(opt => opt.optionText && opt.optionText.trim())
+            .map((opt, optIndex) => ({
+              answerText: opt.optionText.trim(),
+              isCorrect: Boolean(opt.isCorrect),
+              choiceOrder: optIndex + 1
+            }));
+        } else if (q.type === 'TRUE_FALSE') {
+          baseQuestion.answers = [
+            { answerText: "Vrai", isCorrect: q.correctAnswer === true, choiceOrder: 1 },
+            { answerText: "Faux", isCorrect: q.correctAnswer === false, choiceOrder: 2 }
+          ];
+        } else if (q.type === 'SHORT_ANSWER') {
+          baseQuestion.answers = [{
+            answerText: q.correctAnswer.trim(),
+            isCorrect: true,
+            choiceOrder: 1
+          }];
+        }
 
-          return baseQuestion;
+        return baseQuestion;
       });
-
 
       // === ÉTAPE 6: Création des questions ===
-      
       try {
-          const questionsResponse = await quizService.createQuestions(createdQuiz.id, questionsPayload);
+        await quizService.createQuestions(createdQuiz.id, questionsPayload);
       } catch (questionError) {
-          console.error('Erreur lors de la création des questions:', questionError);
-          
-          // Tentative de nettoyage: supprimer le quiz créé
-          try {
-              await quizService.deleteQuiz(createdQuiz.id);
-          } catch (deleteError) {
-              console.error('Impossible de supprimer le quiz:', deleteError);
-          }
-          
-          throw new Error(`Erreur lors de la création des questions: ${questionError.message || questionError}`);
+        console.error('Erreur lors de la création des questions:', questionError);
+        
+        try {
+          await quizService.deleteQuiz(createdQuiz.id);
+        } catch (deleteError) {
+          console.error('Impossible de supprimer le quiz:', deleteError);
+        }
+        
+        throw new Error(`Erreur lors de la création des questions: ${questionError.message || questionError}`);
       }
-           
-      // Redirection
+      
       navigate('/admin/quiz-management');
 
-  } catch (error) {
-      console.error('Erreur complète lors de la publication:', error);
-      
-      // Gestion améliorée des erreurs
-      let errorMessage = 'Erreur inconnue lors de la publication';
-      
-      if (error.response) {
-          const status = error.response.status;
-          const data = error.response.data;
-          
-          switch (status) {
-              case 400:
-                  errorMessage = `Données invalides: ${data.message || data.error || 'Vérifiez les champs du quiz'}`;
-                  break;
-              case 401:
-                  errorMessage = 'Non autorisé. Veuillez vous reconnecter.';
-                  break;
-              case 403:
-                  errorMessage = 'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
-                  break;
-              case 404:
-                  errorMessage = 'Service non trouvé. Vérifiez que l\'API est accessible.';
-                  break;
-              case 500:
-                  errorMessage = `Erreur serveur: ${data.message || 'Contactez l\'administrateur'}`;
-                  break;
-              default:
-                  errorMessage = `Erreur HTTP ${status}: ${data.message || data.error || 'Erreur inconnue'}`;
-          }
-      } else if (error.request) {
-          if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-              errorMessage = 'Impossible de joindre le serveur. Vérifiez que le backend est démarré sur le bon port.';
-          } else if (error.code === 'ENOTFOUND') {
-              errorMessage = 'Serveur introuvable. Vérifiez l\'URL de l\'API.';
-          } else if (error.code === 'ETIMEDOUT') {
-              errorMessage = 'Timeout: Le serveur met trop de temps à répondre.';
-          } else {
-              errorMessage = `Erreur de connexion: ${error.message}`;
-          }
-      } else if (error.message) {
-          errorMessage = error.message;
-      }
-      
-      console.error('📝 Message d\'erreur final:', errorMessage);
-      
+    } catch (error) {
+      console.error('Erreur lors de la publication:', error);
       setErrors({
-          publish: errorMessage
+        publish: errorMessage
       });
               
-  } finally {
+    } finally {
       setIsPublishing(false);
-  }
-};
+    }
+  };
   const PreviewStep = () => (
     <div className="w-full">
       <div className="bg-white rounded-lg border">
@@ -700,7 +639,7 @@ const publishQuiz = async () => {
   const PublicationStep = () => (
     <div className="w-full max-w-2xl mx-auto text-center">
       <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-6" />
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Prêt à publier !</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Prêt à publier </h2>
       <div className="bg-white rounded-lg border p-8 mb-8">
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="text-center">
@@ -747,7 +686,6 @@ const publishQuiz = async () => {
             </>
           ) : (
             <>
-              <CheckCircle className="w-5 h-5 mr-2" />
               Publier le Quiz
             </>
           )}

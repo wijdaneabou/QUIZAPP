@@ -113,13 +113,15 @@ const UserManagementPage = () => {
   }, []);
 
   const loadUsers = async () => {
+    
     try {
       setLoading(true);
       setError(null);
       const userData = await userService.getAllUsers();
+      const nonAdminUsers = userData.filter(user => user.role === 'USER');
       
       // Transform backend data to match frontend expectations
-      const transformedUsers = userData.map(user => ({
+      const transformedUsers = nonAdminUsers.map(user => ({
         id: user.id,
         name: user.name,
         email: user.email,
@@ -132,8 +134,6 @@ const UserManagementPage = () => {
         quizzesCompleted: 0,
         averageScore: 0,
         totalPoints: 0,
-        phone: 'Non renseigné',
-        location: 'Non renseigné'
       }));
       
       setUsers(transformedUsers);
@@ -223,7 +223,6 @@ const UserManagementPage = () => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
       case 'user': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }

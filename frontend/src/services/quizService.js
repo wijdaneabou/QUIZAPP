@@ -149,15 +149,14 @@ const quizTakingService = {
 
 // Créer un nouveau quiz
 export const createQuiz = async (quizData, creatorId) => {
-  try {
-    console.log('Envoi des données quiz:', { ...quizData, creatorId });
-    
+  try {  
     const config = {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       }
+  
     };
 
     const response = await api.post(`/quizzes/creator/${creatorId}`, quizData, config);
@@ -209,8 +208,6 @@ export const createQuiz = async (quizData, creatorId) => {
 
 export const createQuestions = async (quizId, questions) => {
   try {
-    console.log('📤 Envoi des questions pour le quiz', quizId, ':', questions);
-    
     if (!questions || questions.length === 0) {
       throw new Error('Aucune question à créer');
     }
@@ -339,8 +336,6 @@ export const getAllQuizzes = async () => {
 // Récupérer un quiz par ID avec ses questions
 export const getQuizById = async (id) => {
   try {
-    console.log(`🔍 Récupération du quiz ID: ${id}`);
-    
     const config = {
       timeout: 15000,
       headers: {
@@ -395,16 +390,13 @@ export const getQuizById = async (id) => {
 };
 
 export const getQuizzesByCreator = async (creatorId) => {
-  try {
-    console.log(`🔄 Récupération des quiz du créateur ${creatorId}...`);
-    
+  try {  
     const config = {
       timeout: 15000,
       headers: {
         'Accept': 'application/json'
       }
     };
-    
     const response = await api.get(`/quizzes/creator/${creatorId}`, config);
     const quizzes = Array.isArray(response.data) ? response.data : [];
     
@@ -531,9 +523,7 @@ export const updateQuiz = async (id, quizData) => {
 };
 
 export const updateQuestion = async (questionId, questionData) => {
-  try {
-    console.log(`🔄 Mise à jour de la question ${questionId}...`);
-    
+  try {    
     const config = {
       timeout: 30000,
       headers: {

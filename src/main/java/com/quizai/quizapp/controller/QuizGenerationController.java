@@ -32,9 +32,16 @@ public class QuizGenerationController {
     @PostMapping("/generate")
     public Mono<ResponseEntity<Map<String, Object>>> generateQuiz(@Valid @RequestBody GeneratedQuizDto request) {
         logger.info("Demande de génération de quiz reçue: {}", request);
-        Long defaultCreatorId = 1L; 
+        
+        // ⭐ Récupérer le creatorId depuis le DTO au lieu d'utiliser une valeur par défaut
+        Long creatorId = request.getCreatorId();
+        
+        if (creatorId == null || creatorId <= 0) {
+            logger.warn("Aucun creatorId fourni, utilisation de la valeur par défaut");
+            creatorId = 1L; // Fallback seulement si non fourni
+        }
 
-        return generateQuizWithCreator(request, defaultCreatorId);
+        return generateQuizWithCreator(request, creatorId);
     }
 
     @PostMapping("/generate/{creatorId}")

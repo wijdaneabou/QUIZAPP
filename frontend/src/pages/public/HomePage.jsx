@@ -337,8 +337,12 @@ const HomePage = () => {
 </div>
     
       {/* Stats Section */}
-      <div className="py-16 bg-white">
+      <div className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mt-2 mb-4">Notre Impact en Chiffres</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">Des résultats concrets qui témoignent de l'engagement de notre communauté</p>
+          </div>
           {error && (
             <div className="text-center mb-8">
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

@@ -11,11 +11,11 @@ const QuizCard = ({ quiz, onStart, onEdit, onDelete, isAdmin }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-      <div className="p-6">
+    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group h-full flex flex-col">
+      <div className="p-6 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-           <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#CB7206] transition-colors">
+           <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#CB7206] transition-colors line-clamp-2 min-h-[3.5rem]">
               {quiz.title}
             </h3>
             <p className="text-gray-600 mb-3">{quiz.subject}</p>
@@ -30,7 +30,7 @@ const QuizCard = ({ quiz, onStart, onEdit, onDelete, isAdmin }) => {
             <FileText className="h-4 w-4 mr-1" />
             {quiz.questions} questions
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center mt-auto">
             <Clock className="h-4 w-4 mr-1" />
             {quiz.duration} min
           </div>

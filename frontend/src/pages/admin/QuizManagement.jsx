@@ -30,6 +30,7 @@ const QuizManagementPage = () => {
   const [selectedQuizzes, setSelectedQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Catégories et statuts dynamiques basés sur vos données
   const [categories, setCategories] = useState(['all']);
@@ -41,22 +42,48 @@ const QuizManagementPage = () => {
     'HARD': 'Difficile'
   };
 
-  // Charger les quiz au montage du composant
+  // Récupérer l'utilisateur connecté
   useEffect(() => {
-    loadQuizzes();
+    const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user'));
+    if (user) {
+      setCurrentUser(user);
+    } else {
+      setError("Utilisateur non connecté");
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    if (currentUser) {
+      loadQuizzes();
+    }
+  }, [currentUser]);
+
   const loadQuizzes = async () => {
+    if (!currentUser) return;
+
     try {
       setLoading(true);
       setError(null);
-      
-    
-      // Récupérer tous les quiz
       const quizzesData = await quizService.getAllQuizzes();
+      const userQuizzes = quizzesData.filter(quiz => {
+        if (quiz.creatorId) {
+          return quiz.creatorId === currentUser.id;
+        }
+        // Fallback: vérifier par email si creatorId n'existe pas
+        if (quiz.creatorEmail) {
+          return quiz.creatorEmail === currentUser.email;
+        }
+        // Dernier recours: vérifier par nom (moins fiable)
+        if (quiz.creatorName) {
+          return quiz.creatorName === currentUser.name || 
+                 quiz.creatorName === `${currentUser.firstName} ${currentUser.lastName}`;
+        }
+        return false;
+      });
       
       // Transformer et trier les données
-      const formattedQuizzes = quizzesData
+      const formattedQuizzes = userQuizzes
         .map(quiz => ({
           id: quiz.id,
           title: quiz.title || 'Quiz sans titre',
@@ -68,16 +95,14 @@ const QuizManagementPage = () => {
           isAIGenerated: quiz.isAIGenerated || false,
           createdAt: quiz.createdAt ? new Date(quiz.createdAt) : new Date(0),
           updatedAt: quiz.updatedAt ? new Date(quiz.updatedAt) : new Date(0),
-          // Formatage de la date pour l'affichage
           createdAtFormatted: quiz.createdAt ? new Date(quiz.createdAt).toLocaleDateString('fr-FR') : 'Non spécifié',
           updatedAtFormatted: quiz.updatedAt ? new Date(quiz.updatedAt).toLocaleDateString('fr-FR') : 'Non spécifié',
           questions: quiz.questionCount || 0,
           attempts: quiz.attempts || 0,
           averageScore: quiz.averageScore || 0,
           status: quiz.isPublished ? 'active' : 'draft',
-          author: quiz.creatorName || 'Auteur inconnu'
+          author: currentUser.name || currentUser.firstName || 'Moi' 
         }))
-        // Trier par date de création décroissante (les plus récents en premier)
         .sort((a, b) => b.createdAt - a.createdAt);
       
       setQuizzes(formattedQuizzes);
@@ -92,6 +117,7 @@ const QuizManagementPage = () => {
       setDifficulties(['all', ...uniqueDifficulties]);
       
     } catch (error) {
+      console.error('Erreur lors du chargement des quiz:', error);
       setError('Erreur lors du chargement des quiz: ' + error.message);
     } finally {
       setLoading(false);
@@ -108,8 +134,7 @@ const QuizManagementPage = () => {
         quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quiz.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quiz.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.niveau.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.author.toLowerCase().includes(searchTerm.toLowerCase())
+        quiz.niveau.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -149,12 +174,8 @@ const QuizManagementPage = () => {
 
     try {
       await quizService.deleteQuiz(quizId);      
-      // Recharger la liste
       await loadQuizzes();
-      
-      // Retirer de la sélection si nécessaire
       setSelectedQuizzes(prev => prev.filter(id => id !== quizId));
-      
     } catch (error) {
       alert('Erreur lors de la suppression du quiz: ' + error.message);
     }
@@ -168,16 +189,11 @@ const QuizManagementPage = () => {
     }
 
     try {
-      // Supprimer tous les quiz sélectionnés
       await Promise.all(selectedQuizzes.map(id => quizService.deleteQuiz(id)));
-  
-      
-      // Recharger la liste
       await loadQuizzes();
       setSelectedQuizzes([]);
-      
     } catch (error) {
-      console.error(' Erreur lors de la suppression en lot:', error);
+      console.error('Erreur lors de la suppression en lot:', error);
       alert('Erreur lors de la suppression des quiz: ' + error.message);
     }
   };
@@ -236,7 +252,7 @@ const QuizManagementPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestion des Quiz</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Mes Quiz</h1>
             </div>
             <div className="flex space-x-3">
               <button
@@ -266,7 +282,7 @@ const QuizManagementPage = () => {
               <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher par titre, description, sujet ou auteur..."
+                placeholder="Rechercher par titre, description, sujet..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -317,22 +333,25 @@ const QuizManagementPage = () => {
             </div>
           )}
         </div>
+
         {/* Select All Checkbox */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={selectedQuizzes.length === filteredQuizzes.length && filteredQuizzes.length > 0}
-              onChange={handleSelectAll}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Sélectionner tout</span>
-          </label>
-        </div>
+        {filteredQuizzes.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedQuizzes.length === filteredQuizzes.length && filteredQuizzes.length > 0}
+                onChange={handleSelectAll}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Sélectionner tout</span>
+            </label>
+          </div>
+        )}
 
         {/* Results Summary */}
-        <div className="flex justify-between items-center mb-6">
-          {selectedQuizzes.length > 0 && (
+        {selectedQuizzes.length > 0 && (
+          <div className="flex justify-between items-center mb-6">
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-600">{selectedQuizzes.length} sélectionné{selectedQuizzes.length > 1 ? 's' : ''}</span>
               <button 
@@ -342,8 +361,8 @@ const QuizManagementPage = () => {
                 Supprimer
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Quiz Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -415,10 +434,9 @@ const QuizManagementPage = () => {
                   </div>
                 </div>
 
-                {/* Author and Date */}
+                {/* Date */}
                 <div className="text-sm text-gray-500 mb-4">
-                  <p>Par {quiz.author}</p>
-                  <p className="flex items-center mt-1">
+                  <p className="flex items-center">
                     <Calendar className="w-3 h-3 mr-1" />
                     Créé le {quiz.createdAtFormatted}
                   </p>
